@@ -1,5 +1,5 @@
 # exec-in-term
-Execute a command in a new interactive terminal window
+Execute a command in a new interactive terminal window.
 
 ## Syntax
 ```bash

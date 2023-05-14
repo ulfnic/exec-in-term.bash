@@ -122,7 +122,7 @@ if [[ $persist ]]; then
 	printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
 
 	# Open terminal and have bash listen on the named pipe for the rcfile
-	( $terminal_cmd bash --rcfile "$fifo_path" ) &> /dev/null & disown
+	( $terminal_cmd bash -i --rcfile "$fifo_path" ) &> /dev/null & disown
 
 	# Deliver the remixed .bashrc over the named pipe
 	printf '%s' "$bashrc_remix" > "$fifo_path"
@@ -132,7 +132,7 @@ if [[ $persist ]]; then
 
 else
 	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'Nothing to execute'
-	( $terminal_cmd bash -c "$execute_cmd" ) & disown
+	( $terminal_cmd bash -i -c "$execute_cmd" ) & disown
 
 fi
 
