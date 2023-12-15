@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit
 
 
 help_doc (){
@@ -24,8 +25,12 @@ help_doc (){
 
 
 print_stderr() {
-	[[ $2 ]] && printf "$2" "${@:3}" 1>&2
-	[[ $1 == '0' ]] || exit $1
+	if [[ $1 == '0' ]]; then
+		[[ $2 ]] && printf "$2" "${@:3}" 1>&2 || :
+	else
+		[[ $2 ]] && printf '%s'"$2" "ERROR: ${0##*/}, " "${@:3}" 1>&2 || :
+		exit "$1"
+	fi
 }
 
 
@@ -36,7 +41,7 @@ while [[ $1 ]]; do
 		'--terminal'|'-t')
 			shift; terminal=$1 ;;
 		'--working-dir'|'-d')
-			shift; working_dir=$1 ;;
+			shift; cd -- "$1" ;;
 		'--persist'|'-p')
 			persist=1 ;;
 		'--execute'|'-x')
@@ -46,7 +51,7 @@ while [[ $1 ]]; do
 		'--help'|'-h')
 			help_doc ;;
 		*)
-			print_stderr 1 '%s\n' 'Unrecognized parameter: '"$1" ;;
+			print_stderr 1 '%s\n' 'unrecognized parameter: '"$1" ;;
 	esac
 	shift
 done
@@ -71,18 +76,10 @@ terminal_try_arr=(
 
 
 
-# cd into working directory
-if [[ $working_dir ]]; then
-	[[ -d $working_dir ]] || print_stderr 1 '%s\n' '--working-dir is not a directory: '"$working_dir"
-	cd "$working_dir"
-fi
-
-
-
 # Fallback through terminals to use
 if [[ ! $terminal ]]; then
 	for terminal_try in ${terminal_try_arr[@]}; do
-		if which "$terminal_try" &> /dev/null; then
+		if type "$terminal_try" &> /dev/null; then
 			terminal=$terminal_try
 			break
 		fi
@@ -95,8 +92,8 @@ fi
 
 
 # Validation and dependency checks
-[[ $terminal ]] || print_stderr 1 '%s\n' 'No supported terminal installed'
-which "$terminal" &> /dev/null || print_stderr 1 '%s\n' 'Terminal not installed: '"$terminal"
+[[ $terminal ]] || print_stderr 1 '%s\n' 'no supported terminal installed'
+type "$terminal" &> /dev/null || print_stderr 1 '%s\n' 'terminal not installed: '"$terminal"
 type setsid &> /dev/null || print_stderr 1 '%s\n' 'missing dependency: setsid'
 type nohup &> /dev/null || print_stderr 1 '%s\n' 'missing dependency: nohup'
 
@@ -112,7 +109,7 @@ fi
 
 # Define terminal command
 terminal_cmd=${terminal_to_command["$terminal"]}
-[[ $terminal_cmd ]] || print_stderr 1 '%s\n' 'Unsupported terminal'
+[[ $terminal_cmd ]] || print_stderr 1 '%s\n' 'unsupported terminal'
 
 
 
@@ -136,7 +133,7 @@ if [[ $persist ]]; then
 	rm "$fifo_path"
 
 else
-	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'Nothing to execute'
+	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'nothing to execute'
 	setsid -f nohup $terminal_cmd bash -i -c "$execute_cmd" &> /dev/null & disown
 
 fi
