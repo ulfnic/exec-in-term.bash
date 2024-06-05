@@ -4,7 +4,7 @@ set -o errexit
 
 help_doc (){
 	cat <<-'HelpDoc'
-		exec-in-term: execute a BASH command in a new terminal window
+		exec-in-term.bash: execute a BASH command in a new terminal window
 
 		PARAMETERS
 		  -E|--term-exec-prefix EXEC_PREFIX  # Optional, terminal command and flags to precede the command to be executed
@@ -23,12 +23,12 @@ help_doc (){
 		EXAMPLES
 		  export TERM_EXEC_PREFIX='xfce4-terminal -x'
 
-		  exec-in-term -p -x 'echo hello'
-		  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
-		  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
+		  exec-in-term.bash -p -x 'echo hello'
+		  exec-in-term.bash -p -E 'alacritty -e' --stdin <<< 'echo hello'
+		  exec-in-term.bash -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
 
 		  # Open a terminal with a dark blue background by using -P to append the command to a copy of $HOME/.bashrc
-		  exec-in-term -P -x 'printf "\033]11;#%s\007" "000033"'
+		  exec-in-term.bash -P -x 'printf "\033]11;#%s\007" "000033"'
 
 	HelpDoc
 	exit 0

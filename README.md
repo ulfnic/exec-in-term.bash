@@ -1,4 +1,4 @@
-# exec-in-term
+# exec-in-term.bash
 Execute a BASH command in a new terminal window.
 
 ## Syntax
@@ -20,12 +20,12 @@ ENVIRONMENT VARIABLES
 EXAMPLES
   export TERM_EXEC_PREFIX='xfce4-terminal -x'
 
-  exec-in-term -p -x 'echo hello'
-  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
-  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
+  exec-in-term.bash -p -x 'echo hello'
+  exec-in-term.bash -p -E 'alacritty -e' --stdin <<< 'echo hello'
+  exec-in-term.bash -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
 
   # Open a terminal with a dark blue background by using -P to append the command to a copy of $HOME/.bashrc
-  exec-in-term -P -x 'printf "\033]11;#%s\007" "000033"'
+  exec-in-term.bash -P -x 'printf "\033]11;#%s\007" "000033"'
 ```
 
 ## License
