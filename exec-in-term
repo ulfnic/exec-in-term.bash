@@ -6,17 +6,23 @@ help_doc (){
 	cat <<-'HelpDoc'
 		exec-in-term: execute a command in a new interactive terminal window
 
-		-t|--terminal      # Optional, filename of terminal to use
-		-d|--working-dir   # Optional, directory to open in
-		-p|--persist       # Optional, leave the terminal open after execution, makes -x optional
-		-x|--execute       # String to be executed
-		--stdin            # Read string to be executed from stdin
-		-h|--help          # Output help
+		PARAMETERS
+		  -E|--term-exec-prefix CMD   # Optional, terminal command and flags to precede the command to be executed
+		  -x|--execute CMD            # String to be executed
+		  -d|--working-dir DIR        # Optional, directory to open in
+		  -p|--persist                # Optional, leave the terminal open after execution, makes -x optional
+		  --stdin                     # Read string to be executed from stdin
+		  -h|--help                   # Output help
 
-		Examples of use:
+        ENVIRONMENT VARIABLES
+		  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
+
+		EXAMPLES
+		  export TERM_EXEC_PREFIX='xfce4-terminal -x'
+
 		  exec-in-term -p -x 'echo hello'
 		  exec-in-term -x 'echo hello'
-		  exec-in-term --stdin <<< 'echo hello'
+		  exec-in-term -E 'alacritty -e' --stdin <<< 'echo hello'
 
 	HelpDoc
 	exit 0
@@ -49,8 +55,8 @@ setsid_detach() {
 [[ $1 ]] || help_doc
 while [[ $1 ]]; do
 	case $1 in
-		'--terminal'|'-t')
-			shift; terminal=$1 ;;
+		'--term-exec-prefix'|'-E')
+			shift; term_exec_prefix=$1 ;;
 		'--working-dir'|'-d')
 			shift; cd -- "$1" ;;
 		'--persist'|'-p')
@@ -69,61 +75,26 @@ done
 
 
 
+# Insure term_exec_prefix has a value and use TERM_EXEC_PREFIX as a fallback
+: ${term_exec_prefix:=$TERM_EXEC_PREFIX}
+if [[ ! $term_exec_prefix ]]; then
+	print_stderr 1 '%s\n%s\n' \
+		'missing a terminal prefix from either -E or TERM_EXEC_PREFIX export variable' \
+		'Example: export TERM_EXEC_PREFIX='\''xfce4-terminal -x'\'
+fi
+
+
+
 setsid_detach() {
 	setsid -f -- "$@" 0<&- &>/dev/null
 }
 
 
 
-# Define the terminal execute command
-declare -A terminal_to_command=(
-	['alacritty']='alacritty -e'
-	['xfce4-terminal']='xfce4-terminal -x'
-)
-
-declare -A terminal_aliases=(
-	['default']='alacritty'
-	['xfce']='xfce4-terminal'
-)
-
-terminal_try_arr=(
-	alacritty
-	xfce4-terminal
-)
-
-
-
-# Fallback through terminals to use
-if [[ ! $terminal ]]; then
-	for terminal_try in ${terminal_try_arr[@]}; do
-		if type "$terminal_try" &> /dev/null; then
-			terminal=$terminal_try
-			break
-		fi
-	done
-
-else
-	terminal=${terminal_aliases[$terminal]}
-fi
-
-
-
-# Check terminal exists
-[[ $terminal ]] || print_stderr 1 '%s\n' 'no supported terminal installed'
-type -- "$terminal" 1>/dev/null
-
-
-
 # If there's no command to execute, just open the terminal
 if [[ ! $execute_cmd ]]; then
-	setsid_detach "$terminal"
+	setsid_detach "$TERM_EXEC_PREFIX" ':'
 fi
-
-
-
-# Define terminal command
-terminal_cmd=${terminal_to_command["$terminal"]}
-[[ $terminal_cmd ]] || print_stderr 1 '%s\n' 'unsupported terminal'
 
 
 
@@ -138,7 +109,7 @@ if [[ $persist ]]; then
 	printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
 
 	# Open terminal and have bash listen on the named pipe for the rcfile
-	setsid_detach $terminal_cmd bash --rcfile "$fifo_path"
+	setsid_detach $TERM_EXEC_PREFIX bash --rcfile "$fifo_path"
 
 	# Deliver the remixed .bashrc over the named pipe
 	printf '%s' "$bashrc_remix" > "$fifo_path"
@@ -148,7 +119,7 @@ if [[ $persist ]]; then
 
 else
 	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'nothing to execute'
-	setsid_detach $terminal_cmd bash -i -c "$execute_cmd"
+	setsid_detach $TERM_EXEC_PREFIX bash -i -c "$execute_cmd"
 
 fi
 
