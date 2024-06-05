@@ -14,7 +14,7 @@ help_doc (){
 		  --stdin                     # Read string to be executed from stdin
 		  -h|--help                   # Output help
 
-        ENVIRONMENT VARIABLES
+		ENVIRONMENT VARIABLES
 		  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
 		  TMPDIR|XDG_RUNTIME_DIR      # Path to temp directory, fallback is /tmp
 
@@ -22,8 +22,8 @@ help_doc (){
 		  export TERM_EXEC_PREFIX='xfce4-terminal -x'
 
 		  exec-in-term -p -x 'echo hello'
-		  exec-in-term -x 'echo hello'
-		  exec-in-term -E 'alacritty -e' --stdin <<< 'echo hello'
+		  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
+		  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
 
 	HelpDoc
 	exit 0
