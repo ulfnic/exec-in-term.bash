@@ -16,6 +16,7 @@ help_doc (){
 
         ENVIRONMENT VARIABLES
 		  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
+		  TMPDIR|XDG_RUNTIME_DIR      # Path to temp directory, fallback is /tmp
 
 		EXAMPLES
 		  export TERM_EXEC_PREFIX='xfce4-terminal -x'
@@ -101,8 +102,9 @@ fi
 # Open the terminal
 if [[ $persist ]]; then
 	# Create a named pipe with 0600 permissions (rw for user only).
-	fifo_path='/tmp/open_in_terminal__'$$'_'$RANDOM$RANDOM
-	[[ -e $fifo_path ]] && rm "$fifo_path"
+	temp_dir=${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}
+	[[ -d $temp_dir ]] || print_stderr 1 '%s\n' 'temp directory does not exist: '"$temp_dir"
+	fifo_path=$temp_dir'/exec-in-term__'$$'_'${EPOCHREALTIME:-$(date +%s.%N)}
 	mkfifo --mode 0600 "$fifo_path"
 
 	# Create the .bashrc remix
@@ -115,7 +117,7 @@ if [[ $persist ]]; then
 	printf '%s' "$bashrc_remix" > "$fifo_path"
 
 	# Delete the named pipe
-	rm "$fifo_path"
+	rm -- "$fifo_path"
 
 else
 	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'nothing to execute'
