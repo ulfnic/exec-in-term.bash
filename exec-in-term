@@ -7,12 +7,13 @@ help_doc (){
 		exec-in-term: execute a command in a new interactive terminal window
 
 		PARAMETERS
-		  -E|--term-exec-prefix CMD   # Optional, terminal command and flags to precede the command to be executed
-		  -x|--execute CMD            # String to be executed
-		  -d|--working-dir DIR        # Optional, directory to open in
-		  -p|--persist                # Optional, leave the terminal open after execution, makes -x optional
-		  --stdin                     # Read string to be executed from stdin
-		  -h|--help                   # Output help
+		  -E|--term-exec-prefix EXEC_PREFIX  # Optional, terminal command and flags to precede the command to be executed
+		  -x|--execute EXEC_CMD              # String to be executed
+		  -d|--working-dir DIR               # Optional, directory to open in
+		  -p|--persist                       # Optional, Execute bash after EXEC_CMD is executed with bash -i, makes -x optional
+		  -P|--persist-append                # Optional, Execute bash with EXEC_CMD appended to the bottom of a copied $HOME/.bashrc, makes -x optional
+		  --stdin                            # Optional, Read string to be executed from stdin
+		  -h|--help                          # Optional, Output help
 
 		ENVIRONMENT VARIABLES
 		  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
@@ -24,6 +25,9 @@ help_doc (){
 		  exec-in-term -p -x 'echo hello'
 		  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
 		  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
+
+		  # Open a terminal with a dark blue background by using -P to append the command to a copy $HOME/.bashrc
+		  exec-in-term -P -x 'printf "\033]11;#%s\007" "000033"'
 
 	HelpDoc
 	exit 0
@@ -54,21 +58,23 @@ setsid_detach() {
 
 
 [[ $1 ]] || help_doc
+persist_mode='none'
 unset \
 	term_exec_prefix \
 	execute_cmd \
-	persist
 
 while [[ $1 ]]; do
 	case $1 in
 		'--term-exec-prefix'|'-E')
 			shift; term_exec_prefix=$1 ;;
+		'--execute'|'-x')
+			shift; execute_cmd=$1 ;;
 		'--working-dir'|'-d')
 			shift; cd -- "$1" ;;
 		'--persist'|'-p')
-			persist=1 ;;
-		'--execute'|'-x')
-			shift; execute_cmd=$1 ;;
+			persist_mode='regular' ;;
+		'--perist-append'|'-P')
+			persist_mode='append' ;;
 		'--stdin')
 			execute_cmd=$(</dev/stdin) ;;
 		'--help'|'-h')
@@ -97,39 +103,38 @@ setsid_detach() {
 
 
 
-# If there's no command to execute, just open the terminal
-if [[ ! $execute_cmd ]]; then
-	setsid_detach "$TERM_EXEC_PREFIX" ':'
-fi
+case $persist_mode in
+	'none')
+		# If there's no command to execute, just open the terminal
+		[[ $execute_cmd ]] || printf '%s\n' 'no command provided to execute.'
+		setsid_detach $TERM_EXEC_PREFIX bash -i -c "${execute_cmd}"
+		;;
 
+	'regular')
+		: ${execute_cmd:=':'}
+		setsid_detach $TERM_EXEC_PREFIX bash -i -c "${execute_cmd} ; bash"
+		;;
 
+	'append')
+		# Create a named pipe with 0600 permissions (rw for user only).
+		temp_dir=${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}
+		[[ -d $temp_dir ]] || print_stderr 1 '%s\n' 'temp directory does not exist: '"$temp_dir"
+		fifo_path=$temp_dir'/exec-in-term__'$$'_'${EPOCHREALTIME:-$(date +%s.%N)}
+		mkfifo --mode 0600 "$fifo_path"
 
-# Open the terminal
-if [[ $persist ]]; then
-	# Create a named pipe with 0600 permissions (rw for user only).
-	temp_dir=${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}
-	[[ -d $temp_dir ]] || print_stderr 1 '%s\n' 'temp directory does not exist: '"$temp_dir"
-	fifo_path=$temp_dir'/exec-in-term__'$$'_'${EPOCHREALTIME:-$(date +%s.%N)}
-	mkfifo --mode 0600 "$fifo_path"
+		# Create the .bashrc remix
+		printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
 
-	# Create the .bashrc remix
-	printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
+		# Open terminal and have bash listen on the named pipe for the rcfile
+		setsid_detach $TERM_EXEC_PREFIX bash --rcfile "$fifo_path"
 
-	# Open terminal and have bash listen on the named pipe for the rcfile
-	setsid_detach $TERM_EXEC_PREFIX bash --rcfile "$fifo_path"
+		# Deliver the remixed .bashrc over the named pipe
+		printf '%s' "$bashrc_remix" > "$fifo_path"
 
-	# Deliver the remixed .bashrc over the named pipe
-	printf '%s' "$bashrc_remix" > "$fifo_path"
-
-	# Delete the named pipe
-	rm -- "$fifo_path"
-
-else
-	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'nothing to execute'
-	setsid_detach $TERM_EXEC_PREFIX bash -i -c "$execute_cmd"
-
-fi
-
+		# Delete the named pipe
+		rm -- "$fifo_path"
+		;;
+esac
 
 
 
