@@ -54,6 +54,11 @@ setsid_detach() {
 
 
 [[ $1 ]] || help_doc
+unset \
+	term_exec_prefix \
+	execute_cmd \
+	persist
+
 while [[ $1 ]]; do
 	case $1 in
 		'--term-exec-prefix'|'-E')
