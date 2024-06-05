@@ -43,7 +43,7 @@ print_stderr() {
 
 
 # Check dependencies
-type setsid nohup 1>/dev/null
+type setsid 1>/dev/null
 
 
 
