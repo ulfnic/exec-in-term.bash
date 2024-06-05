@@ -35,6 +35,11 @@ print_stderr() {
 
 
 
+# Check dependencies
+type setsid nohup 1>/dev/null
+
+
+
 [[ $1 ]] || help_doc
 while [[ $1 ]]; do
 	case $1 in
@@ -91,11 +96,9 @@ fi
 
 
 
-# Validation and dependency checks
+# Check terminal exists
 [[ $terminal ]] || print_stderr 1 '%s\n' 'no supported terminal installed'
-type "$terminal" &> /dev/null || print_stderr 1 '%s\n' 'terminal not installed: '"$terminal"
-type setsid &> /dev/null || print_stderr 1 '%s\n' 'missing dependency: setsid'
-type nohup &> /dev/null || print_stderr 1 '%s\n' 'missing dependency: nohup'
+type -- "$terminal" 1>/dev/null
 
 
 
