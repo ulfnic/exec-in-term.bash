@@ -3,31 +3,24 @@ Execute a command in a new interactive terminal window.
 
 ## Syntax
 ```bash
-exec-in-term
-  -t|--terminal      # Optional, filename of terminal to use
-  -d|--working-dir   # Optional, directory to open in
-  -p|--persist       # Optional, leave the terminal open after execution, makes -x optional
-  -x|--execute       # String to be executed
-  --stdin            # Read string to be executed from stdin
-  -h|--help          # Output help
+PARAMETERS
+  -E|--term-exec-prefix CMD   # Optional, terminal command and flags to precede the command to be executed
+  -x|--execute CMD            # String to be executed
+  -d|--working-dir DIR        # Optional, directory to open in
+  -p|--persist                # Optional, leave the terminal open after execution, makes -x optional
+  --stdin                     # Read string to be executed from stdin
+  -h|--help                   # Output help
 
-Examples of use:
-  exec-in-term -p -x 'date'
-  exec-in-term -t 'alacritty' -x 'vim'
-  exec-in-term --stdin <<< "micro \"$HOME/.bashrc\""
-```
+ENVIRONMENT VARIABLES
+  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
+  TMPDIR|XDG_RUNTIME_DIR      # Path to temp directory, fallback is /tmp
 
-## Installation
-```bash
-# Install to /usr/local/bin
-cd /usr/local/bin
-sudo wget https://raw.githubusercontent.com/ulfnic/exec-in-term/main/exec-in-term
-sudo chmod +x ./exec-in-term
+EXAMPLES
+  export TERM_EXEC_PREFIX='xfce4-terminal -x'
 
-# Test run
-exec-in-term -p -x 'echo "test"'
-
-# Satisfy dependencies if prompted to do so.
+  exec-in-term -p -x 'echo hello'
+  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
+  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
 ```
 
 ## License
