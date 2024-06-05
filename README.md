@@ -14,11 +14,11 @@ PARAMETERS
   -h|--help                          # Optional, Output help
 
 ENVIRONMENT VARIABLES
-  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
+  EITB__EXEC_PREFIX           # Fallback for -E, terminal command and flags to precede the command to be executed
   TMPDIR|XDG_RUNTIME_DIR      # Path to temp directory, fallback is /tmp
 
 EXAMPLES
-  export TERM_EXEC_PREFIX='xfce4-terminal -x'
+  export EITB__EXEC_PREFIX='xfce4-terminal -x'
 
   exec-in-term.bash -p -x 'echo hello'
   exec-in-term.bash -p -E 'alacritty -e' --stdin <<< 'echo hello'

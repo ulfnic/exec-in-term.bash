@@ -17,11 +17,11 @@ help_doc (){
 		  -h|--help                          # Optional, Output help
 
 		ENVIRONMENT VARIABLES
-		  TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
+		  EITB__EXEC_PREFIX           # Fallback for -E, terminal command and flags to precede the command to be executed
 		  TMPDIR|XDG_RUNTIME_DIR      # Path to temp directory, fallback is /tmp
 
 		EXAMPLES
-		  export TERM_EXEC_PREFIX='xfce4-terminal -x'
+		  export EITB__EXEC_PREFIX='xfce4-terminal -x'
 
 		  exec-in-term.bash -p -x 'echo hello'
 		  exec-in-term.bash -p -E 'alacritty -e' --stdin <<< 'echo hello'
@@ -91,12 +91,12 @@ done
 
 
 
-# Insure term_exec_prefix has a value and use TERM_EXEC_PREFIX as a fallback
-: ${term_exec_prefix:=$TERM_EXEC_PREFIX}
+# Insure term_exec_prefix has a value and use EITB__EXEC_PREFIX as a fallback
+: ${term_exec_prefix:=$EITB__EXEC_PREFIX}
 if [[ ! $term_exec_prefix ]]; then
 	print_stderr 1 '%s\n%s\n' \
-		'missing a terminal prefix from either -E or TERM_EXEC_PREFIX export variable' \
-		'Example: export TERM_EXEC_PREFIX='\''xfce4-terminal -x'\'
+		'missing a terminal prefix from either -E or EITB__EXEC_PREFIX export variable' \
+		'Example: export EITB__EXEC_PREFIX='\''xfce4-terminal -x'\'
 fi
 
 
@@ -111,12 +111,12 @@ case $persist_mode in
 	'none')
 		# If there's no command to execute, just open the terminal
 		[[ $execute_cmd ]] || printf '%s\n' 'no command provided to execute.'
-		setsid_detach $TERM_EXEC_PREFIX bash "$i_flag" -c "${execute_cmd}"
+		setsid_detach $term_exec_prefix bash "$i_flag" -c "${execute_cmd}"
 		;;
 
 	'regular')
 		: ${execute_cmd:=':'}
-		setsid_detach $TERM_EXEC_PREFIX bash "$i_flag" -c "${execute_cmd} ; bash"
+		setsid_detach $term_exec_prefix bash "$i_flag" -c "${execute_cmd} ; bash"
 		;;
 
 	'append')
@@ -130,7 +130,7 @@ case $persist_mode in
 		printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
 
 		# Open terminal and have bash listen on the named pipe for the rcfile
-		setsid_detach $TERM_EXEC_PREFIX bash --rcfile "$fifo_path"
+		setsid_detach $term_exec_prefix bash --rcfile "$fifo_path"
 
 		# Deliver the remixed .bashrc over the named pipe
 		printf '%s' "$bashrc_remix" > "$fifo_path"
