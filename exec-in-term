@@ -4,12 +4,13 @@ set -o errexit
 
 help_doc (){
 	cat <<-'HelpDoc'
-		exec-in-term: execute a command in a new interactive terminal window
+		exec-in-term: execute a BASH command in a new terminal window
 
 		PARAMETERS
 		  -E|--term-exec-prefix EXEC_PREFIX  # Optional, terminal command and flags to precede the command to be executed
 		  -x|--execute EXEC_CMD              # String to be executed
 		  -d|--working-dir DIR               # Optional, directory to open in
+		  -i|--interactive                   # Optional, use bash -i for executing EXEC_CMD, note: -P will always be interactive
 		  -p|--persist                       # Optional, Execute bash after EXEC_CMD is executed with bash -i, makes -x optional
 		  -P|--persist-append                # Optional, Execute bash with EXEC_CMD appended to the bottom of a copied $HOME/.bashrc, makes -x optional
 		  --stdin                            # Optional, Read string to be executed from stdin
@@ -26,7 +27,7 @@ help_doc (){
 		  exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
 		  exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
 
-		  # Open a terminal with a dark blue background by using -P to append the command to a copy $HOME/.bashrc
+		  # Open a terminal with a dark blue background by using -P to append the command to a copy of $HOME/.bashrc
 		  exec-in-term -P -x 'printf "\033]11;#%s\007" "000033"'
 
 	HelpDoc
@@ -60,6 +61,7 @@ setsid_detach() {
 [[ $1 ]] || help_doc
 persist_mode='none'
 unset \
+	i_flag \
 	term_exec_prefix \
 	execute_cmd \
 
@@ -71,6 +73,8 @@ while [[ $1 ]]; do
 			shift; execute_cmd=$1 ;;
 		'--working-dir'|'-d')
 			shift; cd -- "$1" ;;
+		'--interactive'|'-i')
+			i_flag='-i' ;;
 		'--persist'|'-p')
 			persist_mode='regular' ;;
 		'--perist-append'|'-P')
@@ -107,12 +111,12 @@ case $persist_mode in
 	'none')
 		# If there's no command to execute, just open the terminal
 		[[ $execute_cmd ]] || printf '%s\n' 'no command provided to execute.'
-		setsid_detach $TERM_EXEC_PREFIX bash -i -c "${execute_cmd}"
+		setsid_detach $TERM_EXEC_PREFIX bash "$i_flag" -c "${execute_cmd}"
 		;;
 
 	'regular')
 		: ${execute_cmd:=':'}
-		setsid_detach $TERM_EXEC_PREFIX bash -i -c "${execute_cmd} ; bash"
+		setsid_detach $TERM_EXEC_PREFIX bash "$i_flag" -c "${execute_cmd} ; bash"
 		;;
 
 	'append')
