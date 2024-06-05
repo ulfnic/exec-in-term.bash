@@ -1,15 +1,17 @@
 # exec-in-term
-Execute a command in a new interactive terminal window.
+Execute a BASH command in a new terminal window.
 
 ## Syntax
 ```bash
 PARAMETERS
-  -E|--term-exec-prefix CMD   # Optional, terminal command and flags to precede the command to be executed
-  -x|--execute CMD            # String to be executed
-  -d|--working-dir DIR        # Optional, directory to open in
-  -p|--persist                # Optional, leave the terminal open after execution, makes -x optional
-  --stdin                     # Read string to be executed from stdin
-  -h|--help                   # Output help
+  -E|--term-exec-prefix EXEC_PREFIX  # Optional, terminal command and flags to precede the command to be executed
+  -x|--execute EXEC_CMD              # String to be executed
+  -d|--working-dir DIR               # Optional, directory to open in
+  -i|--interactive                   # Optional, use bash -i for executing EXEC_CMD, note: -P will always be interactive
+  -p|--persist                       # Optional, Execute bash after EXEC_CMD is executed with bash -i, makes -x optional
+  -P|--persist-append                # Optional, Execute bash with EXEC_CMD appended to the bottom of a copied $HOME/.bashrc, makes -x optional
+  --stdin                            # Optional, Read string to be executed from stdin
+  -h|--help                          # Optional, Output help
 
 ENVIRONMENT VARIABLES
   TERM_EXEC_PREFIX            # Fallback for -E, terminal command and flags to precede the command to be executed
@@ -21,6 +23,9 @@ EXAMPLES
   exec-in-term -p -x 'echo hello'
   exec-in-term -p -E 'alacritty -e' --stdin <<< 'echo hello'
   exec-in-term -x 'read -rp "Enter a message: "; notify-send "REPLY=$REPLY"'
+
+  # Open a terminal with a dark blue background by using -P to append the command to a copy of $HOME/.bashrc
+  exec-in-term -P -x 'printf "\033]11;#%s\007" "000033"'
 ```
 
 ## License
