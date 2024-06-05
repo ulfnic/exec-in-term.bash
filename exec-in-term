@@ -40,6 +40,12 @@ type setsid nohup 1>/dev/null
 
 
 
+setsid_detach() {
+	setsid -f -- "$@" 0<&- &>/dev/null
+}
+
+
+
 [[ $1 ]] || help_doc
 while [[ $1 ]]; do
 	case $1 in
@@ -60,6 +66,12 @@ while [[ $1 ]]; do
 	esac
 	shift
 done
+
+
+
+setsid_detach() {
+	setsid -f -- "$@" 0<&- &>/dev/null
+}
 
 
 
@@ -104,8 +116,7 @@ type -- "$terminal" 1>/dev/null
 
 # If there's no command to execute, just open the terminal
 if [[ ! $execute_cmd ]]; then
-	setsid -f nohup $terminal &> /dev/null & disown
-	exit 0
+	setsid_detach "$terminal"
 fi
 
 
@@ -127,7 +138,7 @@ if [[ $persist ]]; then
 	printf -v bashrc_remix '%s\n%s\n' "$(< $HOME/.bashrc)" "$execute_cmd"
 
 	# Open terminal and have bash listen on the named pipe for the rcfile
-	setsid -f nohup $terminal_cmd bash --rcfile "$fifo_path" &> /dev/null & disown
+	setsid_detach $terminal_cmd bash --rcfile "$fifo_path"
 
 	# Deliver the remixed .bashrc over the named pipe
 	printf '%s' "$bashrc_remix" > "$fifo_path"
@@ -137,7 +148,7 @@ if [[ $persist ]]; then
 
 else
 	[[ $execute_cmd ]] || print_stderr 1 '%s\n' 'nothing to execute'
-	setsid -f nohup $terminal_cmd bash -i -c "$execute_cmd" &> /dev/null & disown
+	setsid_detach $terminal_cmd bash -i -c "$execute_cmd"
 
 fi
 
