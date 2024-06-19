@@ -7,7 +7,7 @@ PARAMETERS
   -E|--term-exec-prefix EXEC_PREFIX  # Optional, terminal command and flags to precede the command to be executed
   -x|--execute EXEC_CMD              # String to be executed
   -d|--working-dir DIR               # Optional, directory to open in
-  -i|--interactive                   # Optional, use bash -i for executing EXEC_CMD, note: -P will always be interactive
+  +i|--non-interactive               # Optional, use bash without -i for executing EXEC_CMD, note: -P will always be interactive
   -p|--persist                       # Optional, Execute bash after EXEC_CMD is executed with bash -i, makes -x optional
   -P|--persist-append                # Optional, Execute bash with EXEC_CMD appended to the bottom of a copied $HOME/.bashrc, makes -x optional
   --stdin                            # Optional, Read string to be executed from stdin
