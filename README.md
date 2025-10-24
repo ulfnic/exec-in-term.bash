@@ -27,6 +27,3 @@ EXAMPLES
   # Open a terminal with a dark blue background by using -P to append the command to a copy of $HOME/.bashrc
   exec-in-term.bash -P -x 'printf "\033]11;#%s\007" "000033"'
 ```
-
-## License
-Licensed under Zero-Clause BSD (0BSD). See LICENSE for details.
